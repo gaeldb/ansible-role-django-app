@@ -1,0 +1,46 @@
+###############################################################################
+#
+# This ansible playbook deploys Django app with Gunicorn
+#
+# How to use it:
+#  - ansible-playbook -i INVENTORY -e "target=host" deploy.yaml
+#
+################################################################################
+
+---
+
+- name: Deploy Django app
+  hosts: "{{ target }}"
+  become: yes
+
+  roles:
+    - django_app
+
+  vars:
+    app_user: my_app
+    app_dir: /opt/my_app
+    app_name: my_app_user
+    app_port: 8000
+    app_description: My Django App / Gunicorn app
+    app_path_root: my_app_dir
+    app_env:
+      - DJANGO_DB_NAME
+      - DJANGO_DB_USER
+      - DJANGO_DB_PASSWORD
+      - DJANGO_DB_HOST
+      - DJANGO_DB_PORT
+    app_env_file: |
+      DJANGO_DB_NAME="{{ lookup('env', 'DJANGO_DB_NAME') }}"
+      DJANGO_DB_USER="{{ lookup('env', 'DJANGO_DB_USER') }}"
+      DJANGO_DB_PASSWORD="{{ lookup('env', 'DJANGO_DB_PASSWORD') }}"
+      DJANGO_DB_HOST="{{ lookup('env', 'DJANGO_DB_HOST') }}"
+      DJANGO_DB_PORT="{{ lookup('env', 'DJANGO_DB_PORT') }}"
+    app_allowed_host: "['myapp.skalab.fr', '127.0.0.1']"
+    app_csrf_trusted: "['https://myapp.skalab.fr']"
+    # With file
+    app_files:
+      - Pipfile
+      - my_app_dir
+    # OR with git
+    # app_repository: git@github.com:account/repo
+

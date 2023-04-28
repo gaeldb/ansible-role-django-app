@@ -1,0 +1,85 @@
+---
+
+- name: Push app files
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ app_dir }}/"
+    mode: '0644'
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+  loop: "{{ app_files }}"
+  when: app_files is defined
+  notify:
+    - Restart app
+
+- name: Create git archive from repo
+  ansible.builtin.git:
+    repo: "{{ app_repository }}"
+    dest: /usr/src/{{ app_name }}
+    archive: "/usr/src/{{ app_name }}/tarball.zip"
+  when: app_repository is defined
+
+- name: Unarchive app code
+  ansible.builtin.unarchive:
+    src: "/usr/src/{{ app_name }}/tarball.zip"
+    dest: "{{ app_dir }}"
+    remote_src: yes
+  when: app_repository is defined
+  notify:
+    - Restart app
+
+- name: Create venv
+  ansible.builtin.command:
+    cmd: "pipenv install"
+    chdir: "{{ app_dir }}/{{ app_path_root }}/"
+  environment:
+    PIPENV_VENV_IN_PROJECT: "1"
+  notify:
+    - Restart app
+
+- name: Set settings in Django app
+  ansible.builtin.lineinfile:
+    path: "{{ app_dir }}/{{ app_path_settings }}"
+    regexp: "{{ item.key }}"
+    line: "{{ item.value }}"
+  notify:
+    - Restart app
+  loop:
+    - { key: "^ALLOWED_HOSTS =", value: "ALLOWED_HOSTS = {{ app_allowed_host }}" }
+    - { key: "^CSRF_TRUSTED_ORIGINS =", value: "CSRF_TRUSTED_ORIGINS = {{ app_csrf_trusted }}" }
+    - { key: "^DEBUG =", value: "DEBUG = False" }
+    - { key: "^STATIC_ROOT =", value: "STATIC_ROOT = '{{ app_dir }}/static/'" }
+
+- name: Apply Gunicorn server in Django conf
+  ansible.builtin.lineinfile:
+    path: "{{ app_dir }}/{{ app_path_settings }}"
+    line: "INSTALLED_APPS += ('gunicorn',)"
+
+- name: Run Django static collect
+  ansible.builtin.command:
+    cmd: "pipenv run python3 manage.py collectstatic --noinput"
+    chdir: "{{ app_dir }}/{{ app_path_root }}/"
+  environment:
+    PIPENV_VENV_IN_PROJECT: "1"
+
+- name: Apply Django DB migration
+  ansible.builtin.command:
+    cmd: "pipenv run python3 manage.py migrate"
+    chdir: "{{ app_dir }}/{{ app_path_root }}/"
+  environment:
+    PIPENV_VENV_IN_PROJECT: "1"
+    DJANGO_DB_NAME: "{{ lookup('env', 'DJANGO_DB_NAME') }}"
+    DJANGO_DB_USER: "{{ lookup('env', 'DJANGO_DB_USER') }}"
+    DJANGO_DB_PASSWORD: "{{ lookup('env', 'DJANGO_DB_PASSWORD') }}"
+    DJANGO_DB_HOST: "{{ lookup('env', 'DJANGO_DB_HOST') }}"
+    DJANGO_DB_PORT: "{{ lookup('env', 'DJANGO_DB_PORT') }}"
+
+- name: Create app env variables file
+  ansible.builtin.copy:
+    content: "{{ app_env_file }}"
+    dest: "{{ app_dir }}/{{ app_path_root }}/.env"
+    mode: '0600'
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+  notify:
+    - Restart app

@@ -1,0 +1,10 @@
+---
+
+app_name: my_django_app
+app_user: django
+app_dir: /opt/my_django_app/
+app_webserver_user: www-data
+app_port: 8000
+app_path_root: my_django_app
+app_path_settings: "{{ app_path_root }}/{{ app_path_root }}/settings.py"
+app_wsgi_name: "{{ app_path_root }}.wsgi:application"

@@ -1,0 +1,30 @@
+---
+
+- name: Install Requirements
+  ansible.builtin.package:
+    name:
+      - unzip
+      - build-essential
+      - python3
+    state: latest
+
+- name: Install global needed pip packages
+  ansible.builtin.pip:
+    name: "{{ item }}"
+    state: latest
+  loop:
+    - pipenv
+    - cryptography
+
+- name: "Add {{ app_user }} user"
+  user:
+    name: "{{ app_user }}"
+    password: '*' # --disable-password
+
+- name: Create directory {{ app_dir }} if it does not exist
+  ansible.builtin.file:
+    path: "{{ app_dir }}"
+    state: directory
+    mode: '0755'
+    owner: '{{ app_webserver_user }}'
+    group: '{{ app_webserver_user }}'

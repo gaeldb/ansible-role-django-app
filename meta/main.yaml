@@ -1,0 +1,24 @@
+---
+dependencies: []
+
+galaxy_info:
+  role_name: django_app
+  author: gaeldb
+  description: Ansible role to deploy a Django app with Gunicorn
+  company: "Skalab"
+  license: "license (BSD, MIT)"
+  min_ansible_version: 2.9
+  platforms:
+    - name: Debian
+      versions:
+        - bullseye
+        - buster
+        - stretch
+  galaxy_tags:
+    - development
+    - system
+    - web
+    - debian
+    - django
+    - gunicorn
+    - python

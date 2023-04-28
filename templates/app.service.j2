@@ -1,0 +1,20 @@
+[Unit]
+Description={{ app_description }}
+After=network.target
+
+[Service]
+User={{ app_user }}
+Group={{ app_webserver_user }}
+WorkingDirectory={{ app_dir }}/{{ app_path_root }}/
+Restart=on-failure
+RestartSec=1s
+Environment="PIPENV_VENV_IN_PROJECT=1"
+EnvironmentFile={{ app_dir }}/{{ app_path_root }}/.env
+ExecStart=pipenv run gunicorn \
+          --access-logfile - \
+          --workers 4 \
+          --bind=127.0.0.1:{{ app_port }} \
+          {{ app_wsgi_name }}
+
+[Install]
+WantedBy=multi-user.target

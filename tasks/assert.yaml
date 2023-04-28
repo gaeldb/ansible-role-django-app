@@ -1,0 +1,11 @@
+---
+
+- name: Assert that needed env variables are set
+  ansible.builtin.assert:
+    that: lookup('env', '{{ item }}')
+    quiet: true
+  loop: "{{ app_env }}"
+
+- name: Assert that OS is Debian
+  ansible.builtin.assert:
+    that: "ansible_os_family == 'Debian'"

@@ -1,0 +1,14 @@
+---
+
+- name: Configure systemd service
+  ansible.builtin.template:
+    src: "app.service.j2"
+    dest: "/etc/systemd/system/{{ app_name }}.service"
+  notify:
+    - Reload systemd daemon
+    - Restart app
+
+- name: Enable systemd service
+  ansible.builtin.service:
+    name: "{{ app_name }}"
+    enabled: yes

@@ -1,0 +1,13 @@
+---
+
+- name: Assert environnement
+  ansible.builtin.include_tasks: assert.yaml
+
+- name: Install prerequisites
+  ansible.builtin.include_tasks: prerequisites.yaml
+
+- name: Install application
+  ansible.builtin.include_tasks: install.yaml
+
+- name: Install service
+  ansible.builtin.include_tasks: service.yaml
